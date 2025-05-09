@@ -1,0 +1,40 @@
+{
+  "name": "dieting-journal",
+  "version": "1.0.0",
+  "description": "A desktop application to track daily food intake and nutrition goals",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sejeks/dietingJournal.git"
+  },
+  "keywords": [
+    "electron",
+    "diet",
+    "nutrition",
+    "tracking"
+  ],
+  "author": "sejeks",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sejeks/dietingJournal/issues"
+  },
+  "homepage": "https://github.com/sejeks/dietingJournal#readme",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.dieting.journal",
+    "mac": {
+      "category": "public.app-category.healthcare-fitness",
+      "target": [
+        "dmg"
+      ]
+    }
+  }
+}
