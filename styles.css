@@ -29,7 +29,11 @@ input:focus {
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
 }
 
+.date-section {
+    display: contents;
+}
+
 /* Table row hover effect */
-tr:hover {
-    background-color: #f9fafb;
-} 
+/* tr:hover {
+    background-color: #f9fafb14;
+}  */

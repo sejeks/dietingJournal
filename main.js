@@ -2,6 +2,9 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
+// Set the app name
+app.setName('Dieting App');
+
 // Get the app directory path
 const APP_DIR = __dirname;
 const DATA_DIR = path.join(APP_DIR, 'data');
@@ -183,33 +186,45 @@ ipcMain.handle('save-data', async (event, data) => {
 });
 
 function createWindow() {
-    const mainWindow = new BrowserWindow({
-        width: 1200,
-        height: 800,
-        webPreferences: {
-            nodeIntegration: false,
-            contextIsolation: true,
-            enableRemoteModule: false,
-            preload: path.join(APP_DIR, 'preload.js'),
-            sandbox: false // Allow preload script to run
-        }
-    });
+  const mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    title: "Dieting App",
+    icon: path.join(APP_DIR, "icon.icns"),
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(APP_DIR, "preload.js"),
+    },
+  });
 
-    // Log window creation
-    console.log('Main Process - Creating window with preload script:', path.join(APP_DIR, 'preload.js'));
+  mainWindow.loadFile("index.html");
 
-    mainWindow.loadFile('index.html');
+  // Open DevTools only in development mode
+  if (process.env.NODE_ENV === "development") {
     mainWindow.webContents.openDevTools();
+  }
 
-    // Log when window is ready
-    mainWindow.webContents.on('did-finish-load', () => {
-        console.log('Main Process - Window loaded');
-    });
+  // Add keyboard shortcut to toggle DevTools (Cmd+Option+I on Mac, Ctrl+Shift+I on Windows/Linux)
+  mainWindow.webContents.on("before-input-event", (event, input) => {
+    if (input.control && input.shift && input.key.toLowerCase() === "i") {
+      mainWindow.webContents.toggleDevTools();
+      event.preventDefault();
+    }
+  });
 
-    // Log any errors
-    mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
-        console.error('Main Process - Window failed to load:', errorDescription);
-    });
+  // Log when window is ready
+  mainWindow.webContents.on("did-finish-load", () => {
+    console.log("Main Process - Window loaded");
+  });
+
+  // Log any errors
+  mainWindow.webContents.on(
+    "did-fail-load",
+    (event, errorCode, errorDescription) => {
+      console.error("Main Process - Window failed to load:", errorDescription);
+    }
+  );
 }
 
 // Initialize app

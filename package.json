@@ -1,5 +1,5 @@
 {
-  "name": "dieting-journal",
+  "name": "dieting-app",
   "version": "1.0.0",
   "description": "A desktop application to track daily food intake and nutrition goals",
   "main": "main.js",
@@ -26,7 +26,7 @@
   "homepage": "https://github.com/sejeks/dietingJournal#readme",
   "devDependencies": {
     "electron": "^28.0.0",
-    "electron-builder": "^24.9.1"
+    "electron-builder": "^24.13.3"
   },
   "build": {
     "appId": "com.dieting.journal",
@@ -34,7 +34,8 @@
       "category": "public.app-category.healthcare-fitness",
       "target": [
         "dmg"
-      ]
+      ],
+      "icon": "build/icon.icns"
     }
   }
 }
