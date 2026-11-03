@@ -14,8 +14,7 @@ let totalCaloriesElement;
 let remainingCaloriesElement;
 let foodItemInput;
 let foodItemsDatalist;
-let newItemFields;
-let caloriesPer100gInput;
+let foodItemError;
 let dailyCalorieLimitElement;
 let calorieLimitInput;
 let calorieLimitDisplay;
@@ -42,8 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
   remainingCaloriesElement = document.getElementById("remainingCalories");
   foodItemInput = document.getElementById("foodItem");
   foodItemsDatalist = document.getElementById("foodItems");
-  newItemFields = document.getElementById("newItemFields");
-  caloriesPer100gInput = document.getElementById("caloriesPer100g");
+  foodItemError = document.getElementById("foodItemError");
   dailyCalorieLimitElement = document.getElementById("dailyCalorieLimit");
   calorieLimitInput = document.getElementById("calorieLimitInput");
   calorieLimitDisplay = document.getElementById("calorieLimitDisplay");
@@ -78,11 +76,10 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Add event listeners for calorie calculation
-  foodItemInput.addEventListener("input", calculateEstimatedCalories);
+  foodItemInput.addEventListener("input", updateFoodItemInput);
   document
     .getElementById("amount")
     .addEventListener("input", calculateEstimatedCalories);
-  caloriesPer100gInput.addEventListener("input", calculateEstimatedCalories);
   dateInput.addEventListener("change", calculateEstimatedCalories);
 
   // Add event listener for Enter key in edit amount input
@@ -114,20 +111,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Add event listener for food entry form
   foodEntryForm.addEventListener("submit", addFoodEntry);
-
-  // Handle new item input
-  foodItemInput.addEventListener("input", function () {
-    const inputValue = this.value.trim();
-    if (!inputValue) {
-      newItemFields.classList.add("hidden");
-      return;
-    }
-
-    const isNewItem = !referenceList.some(
-      (item) => item.name.toLowerCase() === inputValue.toLowerCase()
-    );
-    newItemFields.classList.toggle("hidden", !isNewItem);
-  });
 
   // Load initial data after all initialization is complete
   loadData();
@@ -215,9 +198,68 @@ function updateFoodItemsDatalist() {
   foodItemsDatalist.innerHTML = "";
   referenceList.forEach((item) => {
     const option = document.createElement("option");
-    option.value = item.name;
+    option.value = `${item.name} - ${item.caloriesPer100g}`;
     foodItemsDatalist.appendChild(option);
   });
+}
+
+const FOOD_ITEM_FORMAT_MESSAGE =
+  "Add calories per 100g at the end, for example: oatmeal - 400";
+
+// "oatmeal - 400" means oatmeal at 400 kcal per 100g
+function parseFoodItemInput(raw) {
+  const value = String(raw || "").trim();
+  const match = value.match(/^(.+?)\s*[-–—]\s*(\d+)\s*$/);
+  if (!match) return null;
+
+  const name = match[1].trim();
+  const caloriesPer100g = parseInt(match[2], 10);
+  if (!name || !Number.isFinite(caloriesPer100g) || caloriesPer100g <= 0) {
+    return null;
+  }
+
+  return { name, caloriesPer100g };
+}
+
+function findReferenceByName(name) {
+  return referenceList.find(
+    (item) => item.name.toLowerCase() === name.toLowerCase()
+  );
+}
+
+function updateFoodItemInput() {
+  validateFoodItemInput();
+  calculateEstimatedCalories();
+}
+
+function validateFoodItemInput() {
+  if (!foodItemInput) return false;
+
+  const value = foodItemInput.value.trim();
+  if (!value) {
+    foodItemInput.setCustomValidity("");
+    if (foodItemError) {
+      foodItemError.textContent = "";
+      foodItemError.classList.add("hidden");
+    }
+    return false;
+  }
+
+  if (!parseFoodItemInput(value)) {
+    foodItemInput.setCustomValidity(FOOD_ITEM_FORMAT_MESSAGE);
+    if (foodItemError) {
+      foodItemError.textContent = FOOD_ITEM_FORMAT_MESSAGE;
+      foodItemError.classList.remove("hidden");
+    }
+    return false;
+  }
+
+  foodItemInput.setCustomValidity("");
+  if (foodItemError) {
+    foodItemError.textContent = "";
+    foodItemError.classList.add("hidden");
+  }
+  return true;
 }
 
 // Calculate estimated calories
@@ -230,28 +272,19 @@ function calculateEstimatedCalories() {
   )
     return;
 
-  const foodItem = foodItemInput.value.trim();
+  const parsedFood = parseFoodItemInput(foodItemInput.value);
   const amount = parseInt(document.getElementById("amount").value) || 0;
   const date = dateInput.value || lastUsedDate;
 
-  if (!foodItem || amount <= 0) {
+  if (!parsedFood || amount <= 0) {
     caloriesPreview.classList.add("hidden");
     return;
   }
 
-  let caloriesPer100g;
-  const referenceItem = referenceList.find(
-    (item) => item.name.toLowerCase() === foodItem.toLowerCase()
-  );
-
-  if (referenceItem) {
-    caloriesPer100g = referenceItem.caloriesPer100g;
-  } else if (caloriesPer100gInput.value) {
-    caloriesPer100g = parseInt(caloriesPer100gInput.value);
-  } else {
-    caloriesPreview.classList.add("hidden");
-    return;
-  }
+  const referenceItem = findReferenceByName(parsedFood.name);
+  const caloriesPer100g = referenceItem
+    ? referenceItem.caloriesPer100g
+    : parsedFood.caloriesPer100g;
 
   const estimatedTotal = Math.round((amount * caloriesPer100g) / 100);
   estimatedCalories.textContent = estimatedTotal;
@@ -269,9 +302,10 @@ function calculateEstimatedCalories() {
 async function addFoodEntry(event) {
   event.preventDefault();
 
-  const foodItem = foodItemInput.value.trim();
-  if (!foodItem) {
-    alert("Please enter a food item");
+  const parsedFood = parseFoodItemInput(foodItemInput.value);
+  if (!parsedFood) {
+    validateFoodItemInput();
+    foodItemInput.reportValidity();
     return;
   }
 
@@ -291,20 +325,12 @@ async function addFoodEntry(event) {
   lastUsedDate = date;
 
   let calories;
-  let referenceItem = referenceList.find(
-    (item) => item.name.toLowerCase() === foodItem.toLowerCase()
-  );
+  let referenceItem = findReferenceByName(parsedFood.name);
 
   if (!referenceItem) {
-    const caloriesPer100g = parseInt(caloriesPer100gInput.value);
-    if (isNaN(caloriesPer100g) || caloriesPer100g <= 0) {
-      alert("Please enter valid calories per 100g for the new item");
-      return;
-    }
-
     referenceItem = {
-      name: foodItem,
-      caloriesPer100g: caloriesPer100g,
+      name: parsedFood.name,
+      caloriesPer100g: parsedFood.caloriesPer100g,
     };
     referenceList.push(referenceItem);
     updateReferenceListUI();
@@ -315,7 +341,7 @@ async function addFoodEntry(event) {
 
   const entry = {
     id: Date.now(),
-    foodItem,
+    foodItem: referenceItem.name,
     amount,
     calories,
     date,
@@ -335,7 +361,7 @@ async function addFoodEntry(event) {
   foodEntryForm.reset();
   // Keep the last used date in the input
   dateInput.value = lastUsedDate;
-  newItemFields.classList.add("hidden");
+  validateFoodItemInput();
   caloriesPreview.classList.add("hidden");
 }
 
@@ -421,46 +447,51 @@ function updateUI() {
       foodEntriesTable.appendChild(dateHeader);
     }
 
-    // Create a container for the date's entries
-    const dateContainer = document.createElement("tbody");
-    dateContainer.id = `date-${date}`;
-    dateContainer.className = "date-section";
-    // Set initial display state based on whether it's today or not
-    dateContainer.style.display =
-      isToday || isSelectedDate ? "table-row-group" : "none";
+    const sectionHidden = !(isToday || isSelectedDate);
 
     // Add entries for this date
     entries.forEach((entry) => {
       const row = document.createElement("tr");
-      row.className = "hover:bg-gray-700 text-gray-300 group flex-row";
+      row.className = "hover:bg-gray-700 text-gray-300 group";
+      row.dataset.dateSection = date;
+      if (sectionHidden) row.style.display = "none";
       row.innerHTML = `
-        <td class="px-4 py-2 w-full">${entry.foodItem}</td>
-        <td class="px-4 py-2 text-right">${entry.amount}g
-            <button onclick="editAmount(${entry.id})" class="ml-2 text-blue-400 hover:text-blue-300 text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              Edit
-            </button>
+        <td class="px-4 py-2">${entry.foodItem}</td>
+        <td class="px-4 py-2 text-right whitespace-nowrap">
+            <span class="inline-flex items-center justify-end">
+                <span>${entry.amount}g</span>
+                <button onclick="editAmount(${entry.id})" class="w-12 ml-2 text-left text-blue-400 hover:text-blue-300 text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  Edit
+                </button>
+            </span>
         </td>
-        <td class="px-4 py-2 text-right">
-            ${entry.calories}kcal
-            <button onclick="deleteEntry(${entry.id})" class="ml-2 text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              Delete
-            </button>
+        <td class="px-4 py-2 text-right whitespace-nowrap">
+            <span class="inline-flex items-center justify-end">
+                <span>${entry.calories}kcal</span>
+                <button onclick="deleteEntry(${entry.id})" class="w-14 ml-2 text-left text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  Delete
+                </button>
+            </span>
         </td>
     `;
-      dateContainer.appendChild(row);
+      foodEntriesTable.appendChild(row);
     });
 
     // Add daily total row with distinct styling
     const totalRow = document.createElement("tr");
     totalRow.className = "bg-gray-800/50 font-medium hover:bg-gray-700/50";
+    totalRow.dataset.dateSection = date;
+    if (sectionHidden) totalRow.style.display = "none";
     totalRow.innerHTML = `
         <td colspan="2" class="px-4 py-2 text-right text-gray-400">Daily Total:</td>
-        <td class="px-4 py-2 text-right text-blue-400">${dailyTotal}kcal</td>
+        <td class="px-4 py-2 text-right text-blue-400 whitespace-nowrap">
+            <span class="inline-flex items-center justify-end">
+                <span>${dailyTotal}kcal</span>
+                <span class="inline-block w-14 ml-2"></span>
+            </span>
+        </td>
     `;
-    dateContainer.appendChild(totalRow);
-
-    // Add the date container to the table
-    foodEntriesTable.appendChild(dateContainer);
+    foodEntriesTable.appendChild(totalRow);
   });
 }
 
@@ -681,13 +712,15 @@ function updateCalorieLimitDisplay() {
 
 // Update toggle date section function
 function toggleDateSection(date) {
-  const container = document.getElementById(`date-${date}`);
+  const rows = document.querySelectorAll(`[data-date-section="${date}"]`);
   const icon = document.querySelector(`.toggle-date-icon[data-date="${date}"]`);
   const dateTotal = document.querySelector(`.date-total[data-date="${date}"]`);
 
-  if (container && icon) {
-    const isVisible = container.style.display !== "none";
-    container.style.display = isVisible ? "none" : "table-row-group";
+  if (rows.length && icon) {
+    const isVisible = rows[0].style.display !== "none";
+    rows.forEach((row) => {
+      row.style.display = isVisible ? "none" : "table-row";
+    });
     icon.textContent = isVisible ? "▶" : "▼";
 
     // Update the date total visibility

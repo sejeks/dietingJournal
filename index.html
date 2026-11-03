@@ -20,8 +20,10 @@
                 <h2 class="text-xl font-semibold mb-3 text-white">Add Food Entry</h2>
                 <form id="foodEntryForm">
                     <div class="mb-3">
-                        <label class="block text-gray-300 mb-1 text-sm">Food Item</label>
-                        <input type="text" list="foodItems" class="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white" id="foodItem" required>
+                        <label class="block text-gray-300 mb-1 text-sm" for="foodItem">Food Item</label>
+                        <input type="text" list="foodItems" class="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white" id="foodItem" placeholder="oatmeal - 400" required>
+                        <p class="mt-1 text-xs text-gray-400">Name, then calories per 100g. Example: oatmeal - 400</p>
+                        <p id="foodItemError" class="mt-1 text-xs text-red-400 hidden"></p>
                         <datalist id="foodItems">
                             <!-- Options will be added dynamically -->
                         </datalist>
@@ -29,12 +31,6 @@
                     <div class="mb-3">
                         <label class="block text-gray-300 mb-1 text-sm">Amount (grams)</label>
                         <input type="number" class="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white" id="amount" required min="1">
-                    </div>
-                    <div id="newItemFields" class="hidden">
-                        <div class="mb-3">
-                            <label class="block text-gray-300 mb-1 text-sm">Calories per 100g</label>
-                            <input type="number" class="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white" id="caloriesPer100g" min="1">
-                        </div>
                     </div>
                     <div id="caloriesPreview" class="mb-3 hidden">
                         <div class="bg-gray-700/50 p-3 rounded">
@@ -100,13 +96,15 @@
                 </button>
             </div>
             <div id="entriesContent" class="overflow-x-auto">
-                <table class="min-w-full text-sm">
+                <table class="w-full text-sm">
                     <thead>
                         <tr class="bg-gray-700">
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-full">Food Item</th>
-                            <th class="px-4 py-2 text-right text-xs font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap">Amount
+                            <th class="px-4 py-2 text-right text-xs font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                                <span class="inline-flex items-center justify-end">Amount<span class="inline-block w-12 ml-2"></span></span>
                             </th>
-                            <th class="px-4 py-2 text-right text-xs font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap">Calories
+                            <th class="px-4 py-2 text-right text-xs font-medium text-gray-400 uppercase tracking-wider whitespace-nowrap">
+                                <span class="inline-flex items-center justify-end">Calories<span class="inline-block w-14 ml-2"></span></span>
                             </th>
                         </tr>
                     </thead>
