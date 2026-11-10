@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -9,6 +9,7 @@ app.setName('Dieting App');
 const APP_DIR = __dirname;
 const DATA_DIR = path.join(APP_DIR, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'data.json');
+const ICON_PNG = path.join(APP_DIR, 'build', 'icon.png');
 
 // Log all paths
 console.log('Main Process - App directory:', APP_DIR);
@@ -190,7 +191,8 @@ function createWindow() {
     width: 1200,
     height: 800,
     title: "Dieting App",
-    icon: path.join(APP_DIR, "icon.icns"),
+    // Used on Windows/Linux (macOS ignores this; see app.dock.setIcon below)
+    ...(fs.existsSync(ICON_PNG) ? { icon: ICON_PNG } : {}),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -238,6 +240,12 @@ app.whenReady().then(() => {
         initializeDataFile();
     }
     
+    // macOS: when running via `npm start` the Dock shows Electron's default icon,
+    // so set ours explicitly. Packaged builds use build/icon.icns from the bundle.
+    if (process.platform === 'darwin' && app.dock && fs.existsSync(ICON_PNG)) {
+        app.dock.setIcon(nativeImage.createFromPath(ICON_PNG));
+    }
+
     createWindow();
 });
 
