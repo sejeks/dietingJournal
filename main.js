@@ -7,9 +7,26 @@ app.setName('Dieting App');
 
 // Get the app directory path
 const APP_DIR = __dirname;
-const DATA_DIR = path.join(APP_DIR, 'data');
-const DATA_FILE = path.join(DATA_DIR, 'data.json');
 const ICON_PNG = path.join(APP_DIR, 'build', 'icon.png');
+
+// Store data in the per-user app data folder so it works when packaged
+// (the app bundle itself is read-only) and is shared by `npm start` and the built app.
+// macOS: ~/Library/Application Support/Dieting App/data.json
+app.setPath('userData', path.join(app.getPath('appData'), 'Dieting App'));
+const DATA_DIR = app.getPath('userData');
+const DATA_FILE = path.join(DATA_DIR, 'data.json');
+
+// One-time migration from the old location (<project>/data/data.json)
+const LEGACY_DATA_FILE = path.join(APP_DIR, 'data', 'data.json');
+try {
+    if (!fs.existsSync(DATA_FILE) && fs.existsSync(LEGACY_DATA_FILE)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+        fs.copyFileSync(LEGACY_DATA_FILE, DATA_FILE);
+        console.log('Main Process - Migrated data from', LEGACY_DATA_FILE);
+    }
+} catch (error) {
+    console.error('Main Process - Error migrating legacy data:', error);
+}
 
 // Log all paths
 console.log('Main Process - App directory:', APP_DIR);

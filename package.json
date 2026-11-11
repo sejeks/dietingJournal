@@ -5,7 +5,10 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "prebuild": "node scripts/migrate-data.js",
     "build": "electron-builder",
+    "postbuild": "node scripts/install-app.js",
+    "build:dmg": "electron-builder --mac dmg",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -30,12 +33,24 @@
   },
   "build": {
     "appId": "com.dieting.journal",
+    "productName": "Dieting App",
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer.js",
+      "index.html",
+      "styles.css",
+      "vendor/**",
+      "build/icon.png",
+      "package.json"
+    ],
     "mac": {
       "category": "public.app-category.healthcare-fitness",
       "target": [
-        "dmg"
+        "dir"
       ],
-      "icon": "build/icon.icns"
+      "icon": "build/icon.icns",
+      "identity": null
     },
     "win": {
       "icon": "build/icon.png"

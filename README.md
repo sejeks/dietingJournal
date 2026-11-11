@@ -31,15 +31,19 @@ npm start
 
 ## Building
 
-To build the application for your platform:
+To build a standalone app for your platform:
 
 ```bash
 npm run build
 ```
 
+On macOS this builds `dist/mac*/Dieting App.app` and installs it into `/Applications` (replacing any previous copy), so you can launch it from Spotlight, Launchpad or the Dock — no terminal needed. Re-run `npm run build` after making changes to update the installed app.
+
+To produce a shareable DMG instead, run `npm run build:dmg`.
+
 ## Data Structure
 
-The application stores data in `data/data.json` with the following structure:
+The application stores data in the per-user app data folder (macOS: `~/Library/Application Support/Dieting App/data.json`). Existing data in `data/data.json` is copied there automatically on first run or build. The file has the following structure:
 
 ```json
 {
